@@ -26,16 +26,4 @@ export interface IncomeFetchParams {
 	limit: number
 	dateFrom?: string
 	dateTo?: string
-	warehouse_name?: string
-	nm_id?: number
-	supplier_article?: string
-	tech_size?: string
-	barcode?: string
-	quantity?: number
-	income_id?: number
-	number?: string
-	total_price?: string
-	date_close?: string
-	last_change_date?: string
-	mn_id?: number
 }

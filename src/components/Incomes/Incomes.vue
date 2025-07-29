@@ -2,9 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useIncomesFetch } from './useIncomesFetch'
 import { useIncomesStore } from './useIncomesStore'
-import type { IncomeFetchParams } from './incomes.types'
 import { formatDateForAPI } from '@/utils/dateUtils'
-import { debounce } from '@/utils/debounce'
 import PrimeButton from 'primevue/button'
 import PrimeDataTable from 'primevue/datatable'
 import PrimeColumn from 'primevue/column'
@@ -46,53 +44,92 @@ const filterInputs = ref<FilterInputs>({
 	mn_id: '',
 })
 
-const filters = ref<IncomeFetchParams>({
-	page: 1,
-	limit: 100,
-})
-
 const dateFromModel = ref<Date>(
 	new Date(filterInputs.value.dateFrom || Date.now())
 )
 const dateToModel = ref<Date>(new Date(filterInputs.value.dateTo || Date.now()))
 
-const { isLoading, error, total, refresh } = useIncomesFetch(filters)
+const { isLoading, error } = useIncomesFetch({
+	page: 1,
+	limit: 500,
+	dateFrom: filterInputs.value.dateFrom,
+	dateTo: filterInputs.value.dateTo,
+})
+
 const store = useIncomesStore()
 
-const transformToAPIParams = (inputs: FilterInputs): IncomeFetchParams => {
-	const result: IncomeFetchParams = {
-		page: filters.value.page,
-		limit: filters.value.limit,
-	}
-
-	const numericFields = ['nm_id', 'quantity', 'income_id', 'mn_id'] as const
-
-	for (const [key, value] of Object.entries(inputs)) {
-		if (value !== undefined && value !== null && value !== '') {
-			if (key === 'dateFrom' || key === 'dateTo') {
-				result[key] = value
-			} else if (
-				numericFields.includes(key as (typeof numericFields)[number])
-			) {
-				result[key as keyof IncomeFetchParams] = Number(value) as never
-			} else {
-				result[key as keyof IncomeFetchParams] = value as never
-			}
+const filteredIncomes = computed(() => {
+	return store.allIncomes.filter(income => {
+		if (
+			filterInputs.value.income_id &&
+			income.income_id !== Number(filterInputs.value.income_id)
+		) {
+			return false
 		}
-	}
+		if (
+			filterInputs.value.number &&
+			!income.number.includes(filterInputs.value.number)
+		) {
+			return false
+		}
+		if (
+			filterInputs.value.warehouse_name &&
+			!income.warehouse_name
+				.toLowerCase()
+				.includes(filterInputs.value.warehouse_name.toLowerCase())
+		) {
+			return false
+		}
+		if (
+			filterInputs.value.nm_id &&
+			income.nm_id !== Number(filterInputs.value.nm_id)
+		) {
+			return false
+		}
+		if (
+			filterInputs.value.supplier_article &&
+			!income.supplier_article
+				.toLowerCase()
+				.includes(filterInputs.value.supplier_article.toLowerCase())
+		) {
+			return false
+		}
+		if (
+			filterInputs.value.tech_size &&
+			!income.tech_size
+				.toLowerCase()
+				.includes(filterInputs.value.tech_size.toLowerCase())
+		) {
+			return false
+		}
+		if (
+			filterInputs.value.barcode &&
+			!income.barcode.includes(filterInputs.value.barcode)
+		) {
+			return false
+		}
+		if (
+			filterInputs.value.quantity &&
+			income.quantity !== Number(filterInputs.value.quantity)
+		) {
+			return false
+		}
+		if (
+			filterInputs.value.total_price &&
+			!income.total_price.includes(filterInputs.value.total_price)
+		) {
+			return false
+		}
+		if (
+			filterInputs.value.mn_id &&
+			income.mn_id !== Number(filterInputs.value.mn_id)
+		) {
+			return false
+		}
 
-	return result
-}
-
-const debouncedRefresh = debounce(() => {
-	filters.value = {
-		...transformToAPIParams(filterInputs.value),
-		page: 1, // Сбрасываем на первую страницу при изменении фильтров
-	}
-	refresh()
-}, 500)
-
-watch(filterInputs, debouncedRefresh, { deep: true })
+		return true
+	})
+})
 
 watch([dateFromModel, dateToModel], ([newFrom, newTo]) => {
 	if (newFrom) filterInputs.value.dateFrom = formatDateForAPI(newFrom)
@@ -130,11 +167,7 @@ const columns = [
 
 			<div class="filter-group">
 				<label for="number">Номер:</label>
-				<PrimeInputText
-					v-model="filterInputs.number"
-					placeholder="Номер"
-					@input="debouncedRefresh()"
-				/>
+				<PrimeInputText v-model="filterInputs.number" placeholder="Номер" />
 			</div>
 
 			<div class="filter-group">
@@ -230,19 +263,11 @@ const columns = [
 
 		<div v-else>
 			<PrimeDataTable
-				:value="store.incomes"
+				:value="filteredIncomes"
 				:paginator="true"
-				:rows="filters.limit"
-				:totalRecords="total"
-				:rowsPerPageOptions="[100, 250, 500]"
-				v-model:first="filters.page"
-				@page="
-					e => {
-						filters.page = e.page + 1
-						filters.limit = e.rows
-						refresh()
-					}
-				"
+				:rows="10"
+				:totalRecords="filteredIncomes.length"
+				:rowsPerPageOptions="[10, 25, 50, 100, 250, 500]"
 				stripedRows
 				responsiveLayout="scroll"
 				removableSort
@@ -262,7 +287,6 @@ const columns = [
 		</div>
 	</div>
 </template>
-
 <style scoped>
 .card {
 	padding: 2rem;

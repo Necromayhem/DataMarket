@@ -29,14 +29,16 @@ export function useIncomesFetch(
 			const queryString = new URLSearchParams()
 
 			queryString.append('key', import.meta.env.VITE_API_KEY)
+			queryString.append('page', String(currentParams.page))
+			queryString.append('limit', String(currentParams.limit))
 
-			for (const [key, value] of Object.entries(currentParams)) {
-				if (value !== undefined && value !== null && value !== '') {
-					queryString.append(key, String(value))
-				}
+			// Добавляем только параметры дат, остальная фильтрация будет на клиенте
+			if (currentParams.dateFrom) {
+				queryString.append('dateFrom', currentParams.dateFrom)
 			}
-
-			queryString.append('limit', '500')
+			if (currentParams.dateTo) {
+				queryString.append('dateTo', currentParams.dateTo)
+			}
 
 			const response = await fetch(
 				`${import.meta.env.VITE_API_BASE_URL}/incomes?${queryString}`
