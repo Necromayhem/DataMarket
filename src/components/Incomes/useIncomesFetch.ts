@@ -6,6 +6,11 @@ import type {
 } from './incomes.types'
 import { useIncomesStore } from './useIncomesStore'
 
+const DEFAULT_PARAMS: IncomeFetchParams = {
+	page: 1,
+	limit: 100,
+}
+
 export function useIncomesFetch(
 	params?: IncomeFetchParams | Ref<IncomeFetchParams>
 ) {
@@ -20,20 +25,17 @@ export function useIncomesFetch(
 		error.value = null
 
 		try {
-			const currentParams = toValue(params) || {}
+			const currentParams = toValue(params) || DEFAULT_PARAMS
 			const queryString = new URLSearchParams()
 
-			// Добавление обязательныя параметров
 			queryString.append('key', import.meta.env.VITE_API_KEY)
 
-			// Добавление переданных параметров
 			for (const [key, value] of Object.entries(currentParams)) {
 				if (value !== undefined && value !== null && value !== '') {
 					queryString.append(key, String(value))
 				}
 			}
 
-			// Фиксированный лимит 500 записей
 			queryString.append('limit', '500')
 
 			const response = await fetch(
@@ -48,7 +50,6 @@ export function useIncomesFetch(
 			data.value = json.data
 			total.value = json.total || 0
 
-			// Сохранение данных в стор
 			store.setIncomes(json.data)
 			store.setTotal(json.total || 0)
 			store.setPage(currentParams.page || 1)

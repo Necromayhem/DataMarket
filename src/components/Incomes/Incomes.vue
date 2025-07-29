@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useIncomesFetch } from './useIncomesFetch'
 import { useIncomesStore } from './useIncomesStore'
-import { formatDateForAPI, parseDateFromAPI } from '@/utils/dateUtils'
+import type { IncomeFetchParams } from './incomes.types'
+import { formatDateForAPI } from '@/utils/dateUtils'
 import { debounce } from '@/utils/debounce'
 import PrimeButton from 'primevue/button'
 import PrimeDataTable from 'primevue/datatable'
@@ -11,95 +12,131 @@ import PrimeProgressSpinner from 'primevue/progressspinner'
 import PrimeInputText from 'primevue/inputtext'
 import PrimeCalendar from 'primevue/calendar'
 
-// Рефы для фильтров
-const nm_id_input = ref('')
-const supplier_article_input = ref('')
-const tech_size_input = ref('')
-const barcode_input = ref('')
-const quantity_input = ref('')
+type FilterInputs = {
+	income_id: string
+	number: string
+	dateFrom: string
+	dateTo: string
+	warehouse_name: string
+	nm_id: string
+	supplier_article: string
+	tech_size: string
+	barcode: string
+	quantity: string
+	total_price: string
+	date_close: string
+	last_change_date: string
+	mn_id: string
+}
 
-const filters = ref({
+const filterInputs = ref<FilterInputs>({
+	income_id: '',
+	number: '',
 	dateFrom: '2024-01-01',
 	dateTo: '2024-12-31',
-	page: 1,
-	limit: 100,
 	warehouse_name: '',
-	nm_id: undefined as number | undefined,
+	nm_id: '',
 	supplier_article: '',
 	tech_size: '',
-	barcode: undefined as number | undefined,
-	quantity: undefined as number | undefined,
+	barcode: '',
+	quantity: '',
+	total_price: '',
+	date_close: '',
+	last_change_date: '',
+	mn_id: '',
 })
 
-const dateFromModel = ref(parseDateFromAPI(filters.value.dateFrom))
-const dateToModel = ref(parseDateFromAPI(filters.value.dateTo))
+const filters = ref<IncomeFetchParams>({
+	page: 1,
+	limit: 100,
+})
+
+const dateFromModel = ref<Date>(
+	new Date(filterInputs.value.dateFrom || Date.now())
+)
+const dateToModel = ref<Date>(new Date(filterInputs.value.dateTo || Date.now()))
 
 const { isLoading, error, total, refresh } = useIncomesFetch(filters)
 const store = useIncomesStore()
 
-// Дебаунс для всех фильтров
+const transformToAPIParams = (inputs: FilterInputs): IncomeFetchParams => {
+	const result: IncomeFetchParams = {
+		page: filters.value.page,
+		limit: filters.value.limit,
+	}
+
+	const numericFields = ['nm_id', 'quantity', 'income_id', 'mn_id'] as const
+
+	for (const [key, value] of Object.entries(inputs)) {
+		if (value !== undefined && value !== null && value !== '') {
+			if (key === 'dateFrom' || key === 'dateTo') {
+				result[key] = value
+			} else if (
+				numericFields.includes(key as (typeof numericFields)[number])
+			) {
+				result[key as keyof IncomeFetchParams] = Number(value) as never
+			} else {
+				result[key as keyof IncomeFetchParams] = value as never
+			}
+		}
+	}
+
+	return result
+}
+
 const debouncedRefresh = debounce(() => {
-	filters.value.page = 1 // Сброс страницы при изменении фильтра
+	filters.value = {
+		...transformToAPIParams(filterInputs.value),
+		page: 1, // Сбрасываем на первую страницу при изменении фильтров
+	}
 	refresh()
 }, 500)
 
+watch(filterInputs, debouncedRefresh, { deep: true })
+
 watch([dateFromModel, dateToModel], ([newFrom, newTo]) => {
-	if (newFrom && newTo) {
-		filters.value.dateFrom = formatDateForAPI(newFrom)
-		filters.value.dateTo = formatDateForAPI(newTo)
-		debouncedRefresh()
-	}
+	if (newFrom) filterInputs.value.dateFrom = formatDateForAPI(newFrom)
+	if (newTo) filterInputs.value.dateTo = formatDateForAPI(newTo)
 })
 
-watch(
-	() => filters.value.warehouse_name,
-	() => debouncedRefresh()
-)
-
-watch(nm_id_input, newVal => {
-	filters.value.nm_id = newVal ? Number(newVal) : undefined
-	debouncedRefresh()
-})
-
-watch(supplier_article_input, newVal => {
-	filters.value.supplier_article = newVal
-	debouncedRefresh()
-})
-
-watch(tech_size_input, newVal => {
-	filters.value.tech_size = newVal
-	debouncedRefresh()
-})
-
-watch(barcode_input, newVal => {
-	filters.value.barcode = newVal ? Number(newVal) : undefined
-	debouncedRefresh()
-})
-
-watch(quantity_input, newVal => {
-	filters.value.quantity = newVal ? Number(newVal) : undefined
-	debouncedRefresh()
-})
-
-const nextPage = () => {
-	filters.value.page++
-}
-
-const prevPage = () => {
-	if (filters.value.page > 1) {
-		filters.value.page--
-	}
-}
-
-const onPage = (event: any) => {
-	filters.value.page = event.page + 1
-	filters.value.limit = event.rows
-}
+const columns = [
+	{ field: 'income_id', header: 'ID' },
+	{ field: 'number', header: 'Номер' },
+	{ field: 'date', header: 'Дата' },
+	{ field: 'warehouse_name', header: 'Склад' },
+	{ field: 'supplier_article', header: 'Артикул' },
+	{ field: 'tech_size', header: 'Размер' },
+	{ field: 'barcode', header: 'Штрихкод' },
+	{ field: 'quantity', header: 'Количество' },
+	{ field: 'total_price', header: 'Цена' },
+	{ field: 'date_close', header: 'Дата закрытия' },
+	{ field: 'last_change_date', header: 'Последнее изменение' },
+	{ field: 'nm_id', header: 'WB ID' },
+	{ field: 'mn_id', header: 'ID маркетплейса' },
+]
 </script>
 
 <template>
 	<div class="card">
 		<div class="filters">
+			<div class="filter-group">
+				<label for="income_id">ID поступления:</label>
+				<PrimeInputText
+					v-model="filterInputs.income_id"
+					placeholder="ID поступления"
+					type="number"
+				/>
+			</div>
+
+			<div class="filter-group">
+				<label for="number">Номер:</label>
+				<PrimeInputText
+					v-model="filterInputs.number"
+					placeholder="Номер"
+					@input="debouncedRefresh()"
+				/>
+			</div>
+
 			<div class="filter-group">
 				<label for="dateFrom">Дата с:</label>
 				<PrimeCalendar
@@ -123,7 +160,7 @@ const onPage = (event: any) => {
 			<div class="filter-group">
 				<label for="warehouse">Склад:</label>
 				<PrimeInputText
-					v-model="filters.warehouse_name"
+					v-model="filterInputs.warehouse_name"
 					placeholder="Название склада"
 					inputId="warehouse"
 				/>
@@ -132,7 +169,7 @@ const onPage = (event: any) => {
 			<div class="filter-group">
 				<label for="nm_id">WB ID:</label>
 				<PrimeInputText
-					v-model="nm_id_input"
+					v-model="filterInputs.nm_id"
 					placeholder="ID товара"
 					type="number"
 				/>
@@ -141,7 +178,7 @@ const onPage = (event: any) => {
 			<div class="filter-group">
 				<label for="supplier_article">Артикул:</label>
 				<PrimeInputText
-					v-model="supplier_article_input"
+					v-model="filterInputs.supplier_article"
 					placeholder="Артикул поставщика"
 				/>
 			</div>
@@ -149,25 +186,35 @@ const onPage = (event: any) => {
 			<div class="filter-group">
 				<label for="tech_size">Размер:</label>
 				<PrimeInputText
-					v-model="tech_size_input"
+					v-model="filterInputs.tech_size"
 					placeholder="Технический размер"
 				/>
 			</div>
 
 			<div class="filter-group">
 				<label for="barcode">Штрихкод:</label>
-				<PrimeInputText
-					v-model="barcode_input"
-					placeholder="Штрихкод"
-					type="number"
-				/>
+				<PrimeInputText v-model="filterInputs.barcode" placeholder="Штрихкод" />
 			</div>
 
 			<div class="filter-group">
 				<label for="quantity">Количество:</label>
 				<PrimeInputText
-					v-model="quantity_input"
+					v-model="filterInputs.quantity"
 					placeholder="Количество"
+					type="number"
+				/>
+			</div>
+
+			<div class="filter-group">
+				<label for="total_price">Цена:</label>
+				<PrimeInputText v-model="filterInputs.total_price" placeholder="Цена" />
+			</div>
+
+			<div class="filter-group">
+				<label for="mn_id">ID маркетплейса:</label>
+				<PrimeInputText
+					v-model="filterInputs.mn_id"
+					placeholder="ID маркетплейса"
 					type="number"
 				/>
 			</div>
@@ -182,100 +229,35 @@ const onPage = (event: any) => {
 		</div>
 
 		<div v-else>
-			<div class="pagination">
-				<PrimeButton
-					@click="prevPage"
-					:disabled="filters.page === 1"
-					icon="pi pi-chevron-left"
-					label="Назад"
-				/>
-
-				<span class="page-info">
-					Страница {{ filters.page }} из {{ store.totalPages }}
-				</span>
-
-				<PrimeButton
-					@click="nextPage"
-					:disabled="filters.page >= store.totalPages"
-					icon="pi pi-chevron-right"
-					iconPos="right"
-					label="Вперёд"
-				/>
-			</div>
-
 			<PrimeDataTable
 				:value="store.incomes"
 				:paginator="true"
 				:rows="filters.limit"
 				:totalRecords="total"
 				:rowsPerPageOptions="[100, 250, 500]"
-				:first="(filters.page - 1) * filters.limit"
-				@page="onPage"
+				v-model:first="filters.page"
+				@page="
+					e => {
+						filters.page = e.page + 1
+						filters.limit = e.rows
+						refresh()
+					}
+				"
 				stripedRows
 				responsiveLayout="scroll"
 				removableSort
 			>
 				<PrimeColumn
-					field="income_id"
-					header="ID"
+					v-for="col in columns"
+					:key="col.field"
+					:field="col.field"
+					:header="col.header"
 					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn
-					field="number"
-					header="Номер"
-					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn field="date" header="Дата" :sortable="true"></PrimeColumn>
-				<PrimeColumn
-					field="warehouse_name"
-					header="Склад"
-					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn
-					field="supplier_article"
-					header="Артикул"
-					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn
-					field="tech_size"
-					header="Размер"
-					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn
-					field="barcode"
-					header="Штрихкод"
-					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn
-					field="quantity"
-					header="Количество"
-					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn
-					field="total_price"
-					header="Цена"
-					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn
-					field="date_close"
-					header="Дата закрытия"
-					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn
-					field="last_change_date"
-					header="Последнее изменение"
-					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn
-					field="nm_id"
-					header="WB ID"
-					:sortable="true"
-				></PrimeColumn>
-				<PrimeColumn
-					field="mn_id"
-					header="ID маркетплейса"
-					:sortable="true"
-				></PrimeColumn>
+				>
+					<template #body="{ data }">
+						{{ data[col.field] || '-' }}
+					</template>
+				</PrimeColumn>
 			</PrimeDataTable>
 		</div>
 	</div>
