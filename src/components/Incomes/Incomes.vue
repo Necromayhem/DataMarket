@@ -3,142 +3,129 @@ import { ref, computed, watch } from 'vue'
 import { useIncomesFetch } from './useIncomesFetch'
 import { useIncomesStore } from './useIncomesStore'
 import { formatDateForAPI } from '@/utils/dateUtils'
-import PrimeButton from 'primevue/button'
+import type{ FilterInputs } from './incomes.types'
 import PrimeDataTable from 'primevue/datatable'
 import PrimeColumn from 'primevue/column'
 import PrimeProgressSpinner from 'primevue/progressspinner'
 import PrimeInputText from 'primevue/inputtext'
 import PrimeCalendar from 'primevue/calendar'
 
-type FilterInputs = {
-	income_id: string
-	number: string
-	dateFrom: string
-	dateTo: string
-	warehouse_name: string
-	nm_id: string
-	supplier_article: string
-	tech_size: string
-	barcode: string
-	quantity: string
-	total_price: string
-	date_close: string
-	last_change_date: string
-	mn_id: string
-}
-
 const filterInputs = ref<FilterInputs>({
-	income_id: '',
-	number: '',
-	dateFrom: '2024-01-01',
-	dateTo: '2024-12-31',
-	warehouse_name: '',
-	nm_id: '',
-	supplier_article: '',
-	tech_size: '',
-	barcode: '',
-	quantity: '',
-	total_price: '',
-	date_close: '',
-	last_change_date: '',
-	mn_id: '',
+  income_id: '',
+  number: '',
+  dateFrom: '2024-01-01',
+  dateTo: '2024-12-31',
+  warehouse_name: '',
+  nm_id: '',
+  supplier_article: '',
+  tech_size: '',
+  barcode: '',
+  quantity: '',
+  total_price: '',
+  date_close: '',
+  last_change_date: '',
 })
 
-const dateFromModel = ref<Date>(
-	new Date(filterInputs.value.dateFrom || Date.now())
-)
-const dateToModel = ref<Date>(new Date(filterInputs.value.dateTo || Date.now()))
+const dateFromModel = ref<Date>(new Date(filterInputs.value.dateFrom))
+const dateToModel = ref<Date>(new Date(filterInputs.value.dateTo))
 
-const { isLoading, error } = useIncomesFetch({
-	page: 1,
-	limit: 500,
-	dateFrom: filterInputs.value.dateFrom,
-	dateTo: filterInputs.value.dateTo,
-})
+const fetchParams = computed(() => ({
+  page: 1,
+  limit: 500,
+  dateFrom: filterInputs.value.dateFrom,
+  dateTo: filterInputs.value.dateTo,
+}))
 
+const { isLoading, error } = useIncomesFetch(fetchParams)
 const store = useIncomesStore()
 
 const filteredIncomes = computed(() => {
-	return store.allIncomes.filter(income => {
-		if (
-			filterInputs.value.income_id &&
-			income.income_id !== Number(filterInputs.value.income_id)
-		) {
-			return false
-		}
-		if (
-			filterInputs.value.number &&
-			!income.number.includes(filterInputs.value.number)
-		) {
-			return false
-		}
-		if (
-			filterInputs.value.warehouse_name &&
-			!income.warehouse_name
-				.toLowerCase()
-				.includes(filterInputs.value.warehouse_name.toLowerCase())
-		) {
-			return false
-		}
-		if (
-			filterInputs.value.nm_id &&
-			income.nm_id !== Number(filterInputs.value.nm_id)
-		) {
-			return false
-		}
-		if (
-			filterInputs.value.supplier_article &&
-			!income.supplier_article
-				.toLowerCase()
-				.includes(filterInputs.value.supplier_article.toLowerCase())
-		) {
-			return false
-		}
-		if (
-			filterInputs.value.tech_size &&
-			!income.tech_size
-				.toLowerCase()
-				.includes(filterInputs.value.tech_size.toLowerCase())
-		) {
-			return false
-		}
-		if (
-			filterInputs.value.barcode &&
-			!income.barcode.includes(filterInputs.value.barcode)
-		) {
-			return false
-		}
-		if (
-			filterInputs.value.quantity &&
-			income.quantity !== Number(filterInputs.value.quantity)
-		) {
-			return false
-		}
-		if (
-			filterInputs.value.total_price &&
-			!income.total_price.includes(filterInputs.value.total_price)
-		) {
-			return false
-		}
-		if (
-			filterInputs.value.mn_id &&
-			income.mn_id !== Number(filterInputs.value.mn_id)
-		) {
-			return false
-		}
+  return store.allIncomes.filter(income => {
+    if (
+      filterInputs.value.income_id &&
+      income.income_id !== Number(filterInputs.value.income_id)
+    ) {
+      return false
+    }
+    if (
+      filterInputs.value.number &&
+      !income.number.includes(filterInputs.value.number)
+    ) {
+      return false
+    }
+    if (
+      filterInputs.value.warehouse_name &&
+      !income.warehouse_name
+        .toLowerCase()
+        .includes(filterInputs.value.warehouse_name.toLowerCase())
+    ) {
+      return false
+    }
+    if (
+      filterInputs.value.nm_id &&
+      !String(income.nm_id).includes(filterInputs.value.nm_id)
+    ) {
+      return false
+    }
+    if (
+      filterInputs.value.supplier_article &&
+      !income.supplier_article
+        .toLowerCase()
+        .includes(filterInputs.value.supplier_article.toLowerCase())
+    ) {
+      return false
+    }
+    if (
+      filterInputs.value.tech_size &&
+      !income.tech_size
+        .toLowerCase()
+        .includes(filterInputs.value.tech_size.toLowerCase())
+    ) {
+      return false
+    }
+    if (
+      filterInputs.value.barcode &&
+      !String(income.barcode).includes(filterInputs.value.barcode)
+    ) {
+      return false
+    }
+    if (
+      filterInputs.value.quantity &&
+      income.quantity !== Number(filterInputs.value.quantity)
+    ) {
+      return false
+    }
+    if (
+      filterInputs.value.total_price &&
+      !income.total_price.includes(filterInputs.value.total_price)
+    ) {
+      return false
+    }
+    if (
+      filterInputs.value.date_close &&
+      !income.date_close.includes(filterInputs.value.date_close)
+    ) {
+      return false
+    }
+    if (
+      filterInputs.value.last_change_date &&
+      !income.last_change_date.includes(filterInputs.value.last_change_date)
+    ) {
+      return false
+    }
 
-		return true
-	})
+    return true
+  })
 })
 
 watch([dateFromModel, dateToModel], ([newFrom, newTo]) => {
-	if (newFrom) filterInputs.value.dateFrom = formatDateForAPI(newFrom)
-	if (newTo) filterInputs.value.dateTo = formatDateForAPI(newTo)
+  if (newFrom) filterInputs.value.dateFrom = formatDateForAPI(newFrom)
+  if (newTo) filterInputs.value.dateTo = formatDateForAPI(newTo)
 })
 
 const columns = [
 	{ field: 'income_id', header: 'ID' },
-	{ field: 'number', header: 'Номер' },
+	// { field: 'number', header: 'Номер' },
 	{ field: 'date', header: 'Дата' },
 	{ field: 'warehouse_name', header: 'Склад' },
 	{ field: 'supplier_article', header: 'Артикул' },
@@ -148,8 +135,7 @@ const columns = [
 	{ field: 'total_price', header: 'Цена' },
 	{ field: 'date_close', header: 'Дата закрытия' },
 	{ field: 'last_change_date', header: 'Последнее изменение' },
-	{ field: 'nm_id', header: 'WB ID' },
-	{ field: 'mn_id', header: 'ID маркетплейса' },
+	{ field: 'nm_id', header: 'ID маркетплейса' },
 ]
 </script>
 
@@ -165,10 +151,6 @@ const columns = [
 				/>
 			</div>
 
-			<div class="filter-group">
-				<label for="number">Номер:</label>
-				<PrimeInputText v-model="filterInputs.number" placeholder="Номер" />
-			</div>
 
 			<div class="filter-group">
 				<label for="dateFrom">Дата с:</label>
@@ -196,15 +178,6 @@ const columns = [
 					v-model="filterInputs.warehouse_name"
 					placeholder="Название склада"
 					inputId="warehouse"
-				/>
-			</div>
-
-			<div class="filter-group">
-				<label for="nm_id">WB ID:</label>
-				<PrimeInputText
-					v-model="filterInputs.nm_id"
-					placeholder="ID товара"
-					type="number"
 				/>
 			</div>
 
@@ -246,7 +219,7 @@ const columns = [
 			<div class="filter-group">
 				<label for="mn_id">ID маркетплейса:</label>
 				<PrimeInputText
-					v-model="filterInputs.mn_id"
+					v-model="filterInputs.nm_id"
 					placeholder="ID маркетплейса"
 					type="number"
 				/>

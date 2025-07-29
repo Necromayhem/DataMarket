@@ -5,14 +5,14 @@ export interface Income {
 	last_change_date: string
 	supplier_article: string
 	tech_size: string
-	barcode: string
+	barcode: number
 	quantity: number
 	total_price: string
 	date_close: string
 	warehouse_name: string
 	nm_id: number
-	mn_id: number
 }
+
 
 export interface IncomeApiResponse {
 	data: Income[]
@@ -26,4 +26,20 @@ export interface IncomeFetchParams {
 	limit: number
 	dateFrom?: string
 	dateTo?: string
+}
+
+export interface FilterInputs  {
+	income_id: string
+	number: string
+	dateFrom: string
+	dateTo: string
+	warehouse_name: string
+	supplier_article: string
+	tech_size: string
+	barcode: string
+	quantity: string
+	total_price: string
+	date_close: string
+	last_change_date: string
+	nm_id: string
 }
