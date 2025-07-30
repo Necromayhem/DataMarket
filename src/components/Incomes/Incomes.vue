@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed } from "vue";
 import { useIncomesFetch } from "./useIncomesFetch";
 import { useIncomesStore } from "./useIncomesStore";
 import { useIncomesFilters } from "./useIncomesFilters";
+import { incomesColumns } from "./incomesColumns";
 import PrimeDataTable from "primevue/datatable";
 import PrimeColumn from "primevue/column";
 import PrimeProgressSpinner from "primevue/progressspinner";
@@ -12,20 +12,6 @@ import PrimeCalendar from "primevue/calendar";
 const store = useIncomesStore();
 const { filterInputs, dateFromModel, dateToModel, fetchParams, filteredIncomes } = useIncomesFilters(store);
 const { isLoading, error } = useIncomesFetch(fetchParams);
-
-const columns = [
-    { field: "income_id", header: "ID" },
-    { field: "date", header: "Дата" },
-    { field: "warehouse_name", header: "Склад" },
-    { field: "supplier_article", header: "Артикул" },
-    { field: "tech_size", header: "Размер" },
-    { field: "barcode", header: "Штрихкод" },
-    { field: "quantity", header: "Количество" },
-    { field: "total_price", header: "Цена" },
-    { field: "date_close", header: "Дата закрытия" },
-    { field: "last_change_date", header: "Последнее изменение" },
-    { field: "nm_id", header: "ID маркетплейса" },
-];
 </script>
 
 <template>
@@ -124,27 +110,27 @@ const columns = [
 
     <div v-else>
       <PrimeDataTable
-        :value="filteredIncomes"
-        :paginator="true"
-        :rows="10"
-        :totalRecords="filteredIncomes.length"
-        :rowsPerPageOptions="[10, 25, 50, 100, 250, 500]"
-        stripedRows
-        responsiveLayout="scroll"
-        removableSort
-      >
-        <PrimeColumn
-          v-for="col in columns"
-          :key="col.field"
-          :field="col.field"
-          :header="col.header"
-          :sortable="true"
+            :value="filteredIncomes"
+            :paginator="true"
+            :rows="10"
+            :totalRecords="filteredIncomes.length"
+            :rowsPerPageOptions="[10, 25, 50, 100, 250, 500]"
+            stripedRows
+            responsiveLayout="scroll"
+            removableSort
         >
-          <template #body="{ data }">
-            {{ data[col.field] || "-" }}
-          </template>
-        </PrimeColumn>
-      </PrimeDataTable>
+            <PrimeColumn
+                v-for="col in incomesColumns"
+                :key="col.field"
+                :field="col.field"
+                :header="col.header"
+                :sortable="true"
+            >
+                <template #body="{ data }">
+                    {{ data[col.field] || "-" }}
+                </template>
+            </PrimeColumn>
+        </PrimeDataTable>
     </div>
   </div>
 </template>

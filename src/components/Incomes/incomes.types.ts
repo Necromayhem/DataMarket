@@ -43,3 +43,9 @@ export interface FilterInputs  {
 	last_change_date: string
 	nm_id: string
 }
+
+export interface DataTableColumn {
+    field: string;
+    header: string;
+    sortable?: boolean;
+}
