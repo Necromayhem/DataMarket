@@ -1,29 +1,30 @@
 <script setup lang="ts">
-import { useSalesFetch } from "./useSalesFetch";
-import { useSalesStore } from "./useSalesStore";
-import { useSalesFilters } from "./useSalesFilters";
-import { salesColumns } from "./salesColumns";
+import { useOrdersFetch } from "./useOrdersFetch";
+import { useOrdersStore } from "./useOrdersStore";
+import { useOrdersFilters } from "./useOrdersFilters";
+import { ordersColumns } from "./ordersColumns";
 import PrimeDataTable from "primevue/datatable";
 import PrimeColumn from "primevue/column";
 import PrimeProgressSpinner from "primevue/progressspinner";
 import PrimeInputText from "primevue/inputtext";
 import PrimeCalendar from "primevue/calendar";
 import PrimeInputNumber from "primevue/inputnumber";
+import PrimeDropdown from "primevue/dropdown";
 
-const store = useSalesStore();
+const store = useOrdersStore();
 const { 
     filterInputs, 
     dateFromModel, 
     dateToModel, 
     fetchParams, 
-    filteredSales,
+    filteredOrders,
     nmIdModel,
     totalPriceModel,
-    priceWithDiscModel,
     discountPercentModel,
-    formatNumber
-} = useSalesFilters(store);
-const { isLoading, error } = useSalesFetch(fetchParams);
+    formatNumber,
+    cancelOptions
+} = useOrdersFilters(store);
+const { isLoading, error } = useOrdersFetch(fetchParams);
 </script>
 
 <template>
@@ -76,17 +77,6 @@ const { isLoading, error } = useSalesFetch(fetchParams);
       </div>
 
       <div class="filter-group">
-        <label for="price_with_disc">Цена со скидкой:</label>
-        <PrimeInputNumber 
-          v-model="priceWithDiscModel" 
-          placeholder="Цена со скидкой" 
-          mode="decimal" 
-          :minFractionDigits="0"
-          :maxFractionDigits="2"
-        />
-      </div>
-
-      <div class="filter-group">
         <label for="discount_percent">Скидка %:</label>
         <PrimeInputNumber 
           v-model="discountPercentModel" 
@@ -103,18 +93,13 @@ const { isLoading, error } = useSalesFetch(fetchParams);
       </div>
 
       <div class="filter-group">
-        <label for="country_name">Страна:</label>
-        <PrimeInputText v-model="filterInputs.country_name" placeholder="Поиск по стране" />
+        <label for="oblast">Область:</label>
+        <PrimeInputText v-model="filterInputs.oblast" placeholder="Поиск по области" />
       </div>
 
       <div class="filter-group">
-        <label for="region_name">Регион:</label>
-        <PrimeInputText v-model="filterInputs.region_name" placeholder="Поиск по региону" />
-      </div>
-
-      <div class="filter-group">
-        <label for="sale_id">ID продажи:</label>
-        <PrimeInputText v-model="filterInputs.sale_id" placeholder="Поиск по ID продажи" />
+        <label for="income_id">ID поставки:</label>
+        <PrimeInputText v-model="filterInputs.income_id" placeholder="Поиск по ID поставки" />
       </div>
 
       <div class="filter-group">
@@ -125,6 +110,17 @@ const { isLoading, error } = useSalesFetch(fetchParams);
       <div class="filter-group">
         <label for="brand">Бренд:</label>
         <PrimeInputText v-model="filterInputs.brand" placeholder="Поиск по бренду" />
+      </div>
+
+      <div class="filter-group">
+        <label for="is_cancel">Статус:</label>
+        <PrimeDropdown 
+          v-model="filterInputs.is_cancel" 
+          :options="cancelOptions" 
+          optionLabel="label" 
+          optionValue="value"
+          placeholder="Выберите статус"
+        />
       </div>
     </div>
 
@@ -138,10 +134,10 @@ const { isLoading, error } = useSalesFetch(fetchParams);
 
     <div v-else>
       <PrimeDataTable
-        :value="filteredSales"
+        :value="filteredOrders"
         :paginator="true"
         :rows="10"
-        :totalRecords="filteredSales.length"
+        :totalRecords="filteredOrders.length"
         :rowsPerPageOptions="[10, 25, 50, 100]"
         stripedRows
         responsiveLayout="scroll"
@@ -150,15 +146,18 @@ const { isLoading, error } = useSalesFetch(fetchParams);
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
       >
         <PrimeColumn
-          v-for="col in salesColumns"
+          v-for="col in ordersColumns"
           :key="col.field"
           :field="col.field"
           :header="col.header"
           :sortable="true"
         >
           <template #body="{ data }">
-            <template v-if="['total_price', 'for_pay', 'finished_price', 'price_with_disc', 'discount_percent'].includes(col.field)">
+            <template v-if="['total_price', 'discount_percent'].includes(col.field)">
               {{ formatNumber(data[col.field]) }}
+            </template>
+            <template v-else-if="col.field === 'is_cancel'">
+              {{ data[col.field] ? 'Да' : 'Нет' }}
             </template>
             <template v-else>
               {{ data[col.field] || "-" }}
