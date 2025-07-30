@@ -1,141 +1,30 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { computed } from "vue";
 import { useIncomesFetch } from "./useIncomesFetch";
 import { useIncomesStore } from "./useIncomesStore";
-import { formatDateForAPI } from "@/utils/dateUtils";
-import type { FilterInputs } from "./incomes.types";
+import { useIncomesFilters } from "./useIncomesFilters";
 import PrimeDataTable from "primevue/datatable";
 import PrimeColumn from "primevue/column";
 import PrimeProgressSpinner from "primevue/progressspinner";
 import PrimeInputText from "primevue/inputtext";
 import PrimeCalendar from "primevue/calendar";
 
-const filterInputs = ref<FilterInputs>({
-  income_id: "",
-  number: "",
-  dateFrom: "2024-01-01",
-  dateTo: "2024-12-31",
-  warehouse_name: "",
-  nm_id: "",
-  supplier_article: "",
-  tech_size: "",
-  barcode: "",
-  quantity: "",
-  total_price: "",
-  date_close: "",
-  last_change_date: "",
-});
-
-const dateFromModel = ref<Date>(new Date(filterInputs.value.dateFrom));
-const dateToModel = ref<Date>(new Date(filterInputs.value.dateTo));
-
-const fetchParams = computed(() => ({
-  page: 1,
-  limit: 500,
-  dateFrom: filterInputs.value.dateFrom,
-  dateTo: filterInputs.value.dateTo,
-}));
-
-const { isLoading, error } = useIncomesFetch(fetchParams);
 const store = useIncomesStore();
-
-const filteredIncomes = computed(() => {
-  return store.allIncomes.filter((income) => {
-    if (
-      filterInputs.value.income_id &&
-      !String(income.income_id).includes(filterInputs.value.income_id)
-    ) {
-      return false;
-    }
-    if (
-      filterInputs.value.number &&
-      !income.number.includes(filterInputs.value.number)
-    ) {
-      return false;
-    }
-    if (
-      filterInputs.value.warehouse_name &&
-      !income.warehouse_name
-        .toLowerCase()
-        .includes(filterInputs.value.warehouse_name.toLowerCase())
-    ) {
-      return false;
-    }
-    if (
-      filterInputs.value.nm_id &&
-      !String(income.nm_id).includes(filterInputs.value.nm_id)
-    ) {
-      return false;
-    }
-    if (
-      filterInputs.value.supplier_article &&
-      !income.supplier_article
-        .toLowerCase()
-        .includes(filterInputs.value.supplier_article.toLowerCase())
-    ) {
-      return false;
-    }
-    if (
-      filterInputs.value.tech_size &&
-      !income.tech_size
-        .toLowerCase()
-        .includes(filterInputs.value.tech_size.toLowerCase())
-    ) {
-      return false;
-    }
-    if (
-      filterInputs.value.barcode &&
-      !String(income.barcode).includes(filterInputs.value.barcode)
-    ) {
-      return false;
-    }
-    if (
-      filterInputs.value.quantity &&
-      income.quantity !== Number(filterInputs.value.quantity)
-    ) {
-      return false;
-    }
-    if (
-      filterInputs.value.total_price &&
-      !income.total_price.includes(filterInputs.value.total_price)
-    ) {
-      return false;
-    }
-    if (
-      filterInputs.value.date_close &&
-      !income.date_close.includes(filterInputs.value.date_close)
-    ) {
-      return false;
-    }
-    if (
-      filterInputs.value.last_change_date &&
-      !income.last_change_date.includes(filterInputs.value.last_change_date)
-    ) {
-      return false;
-    }
-
-    return true;
-  });
-});
-
-watch([dateFromModel, dateToModel], ([newFrom, newTo]) => {
-  if (newFrom) filterInputs.value.dateFrom = formatDateForAPI(newFrom);
-  if (newTo) filterInputs.value.dateTo = formatDateForAPI(newTo);
-});
+const { filterInputs, dateFromModel, dateToModel, fetchParams, filteredIncomes } = useIncomesFilters(store);
+const { isLoading, error } = useIncomesFetch(fetchParams);
 
 const columns = [
-  { field: "income_id", header: "ID" },
-  // { field: 'number', header: 'Номер' },
-  { field: "date", header: "Дата" },
-  { field: "warehouse_name", header: "Склад" },
-  { field: "supplier_article", header: "Артикул" },
-  { field: "tech_size", header: "Размер" },
-  { field: "barcode", header: "Штрихкод" },
-  { field: "quantity", header: "Количество" },
-  { field: "total_price", header: "Цена" },
-  { field: "date_close", header: "Дата закрытия" },
-  { field: "last_change_date", header: "Последнее изменение" },
-  { field: "nm_id", header: "ID маркетплейса" },
+    { field: "income_id", header: "ID" },
+    { field: "date", header: "Дата" },
+    { field: "warehouse_name", header: "Склад" },
+    { field: "supplier_article", header: "Артикул" },
+    { field: "tech_size", header: "Размер" },
+    { field: "barcode", header: "Штрихкод" },
+    { field: "quantity", header: "Количество" },
+    { field: "total_price", header: "Цена" },
+    { field: "date_close", header: "Дата закрытия" },
+    { field: "last_change_date", header: "Последнее изменение" },
+    { field: "nm_id", header: "ID маркетплейса" },
 ];
 </script>
 
