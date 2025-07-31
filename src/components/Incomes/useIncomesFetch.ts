@@ -39,9 +39,7 @@ export function useIncomesFetch(
         queryString.append('dateTo', currentParams.dateTo)
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/incomes?${queryString}`
-      )
+     const response = await fetch(`/api/incomes?${queryString}`)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
