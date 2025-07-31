@@ -2,13 +2,14 @@
 import { useSalesFetch } from "./useSalesFetch";
 import { useSalesStore } from "./useSalesStore";
 import { useSalesFilters } from "./useSalesFilters";
-import { salesColumns } from "./salesColumns";
-import PrimeDataTable from "primevue/datatable";
-import PrimeColumn from "primevue/column";
-import PrimeProgressSpinner from "primevue/progressspinner";
 import PrimeInputText from "primevue/inputtext";
 import PrimeCalendar from "primevue/calendar";
 import PrimeInputNumber from "primevue/inputnumber";
+import PrimeProgressSpinner from "primevue/progressspinner";
+import PrimeButton from "primevue/button";
+import SalesTable from "./SalesTable.vue";
+import SalesChart from "./SalesChart.vue";
+import { ref } from "vue";
 
 const store = useSalesStore();
 const { 
@@ -24,10 +25,24 @@ const {
     formatNumber
 } = useSalesFilters(store);
 const { isLoading, error } = useSalesFetch(fetchParams);
+
+const showTable = ref(true);
+const toggleView = () => {
+  showTable.value = !showTable.value;
+};
 </script>
 
 <template>
   <div class="card">
+    <div class="view-toggle">
+      <PrimeButton 
+        @click="toggleView" 
+        :label="showTable ? 'Показать график' : 'Показать таблицу'" 
+        icon="pi pi-chart-line"
+        class="p-button-text"
+      />
+    </div>
+
     <div class="filters">
       <div class="filter-group">
         <label for="g_number">Номер заказа:</label>
@@ -137,35 +152,8 @@ const { isLoading, error } = useSalesFetch(fetchParams);
     </div>
 
     <div v-else>
-      <PrimeDataTable
-        :value="filteredSales"
-        :paginator="true"
-        :rows="10"
-        :totalRecords="filteredSales.length"
-        :rowsPerPageOptions="[10, 25, 50, 100]"
-        stripedRows
-        responsiveLayout="scroll"
-        removableSort
-        currentPageReportTemplate="Показано {first} - {last} из {totalRecords}"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-      >
-        <PrimeColumn
-          v-for="col in salesColumns"
-          :key="col.field"
-          :field="col.field"
-          :header="col.header"
-          :sortable="true"
-        >
-          <template #body="{ data }">
-            <template v-if="['total_price', 'for_pay', 'finished_price', 'price_with_disc', 'discount_percent'].includes(col.field)">
-              {{ formatNumber(data[col.field]) }}
-            </template>
-            <template v-else>
-              {{ data[col.field] || "-" }}
-            </template>
-          </template>
-        </PrimeColumn>
-      </PrimeDataTable>
+      <SalesTable v-if="showTable" :sales="filteredSales" />
+      <SalesChart v-else :sales="filteredSales" />
     </div>
   </div>
 </template>
@@ -208,6 +196,12 @@ const { isLoading, error } = useSalesFetch(fetchParams);
   background-color: var(--red-100);
   color: var(--red-700);
   border-radius: 6px;
+}
+
+.view-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 }
 
 @media (max-width: 768px) {
