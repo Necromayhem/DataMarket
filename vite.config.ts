@@ -16,12 +16,12 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      '/api': {
-        target: 'http://109.73.206.144:6969/api', // Базовый URL бэкенда
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
-  },
+  proxy: {
+    '/api': {
+      target: 'http://109.73.206.144:6969', 
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/api/, '/api') 
+    }
+  }
+}
 })
