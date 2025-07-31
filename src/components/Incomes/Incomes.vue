@@ -36,7 +36,7 @@ const toggleView = () => {
         <label for="income_id">ID поступления:</label>
         <PrimeInputText
           v-model="filterInputs.income_id"
-          placeholder="ID поступления"
+          placeholder="Поиск по ID поступления"
           type="number"
         />
       </div>
@@ -65,7 +65,7 @@ const toggleView = () => {
         <label for="warehouse">Склад:</label>
         <PrimeInputText
           v-model="filterInputs.warehouse_name"
-          placeholder="Название склада"
+          placeholder="Поиск по складу"
           inputId="warehouse"
         />
       </div>
@@ -74,7 +74,7 @@ const toggleView = () => {
         <label for="supplier_article">Артикул:</label>
         <PrimeInputText
           v-model="filterInputs.supplier_article"
-          placeholder="Артикул поставщика"
+          placeholder="Поиск по поставщику"
         />
       </div>
 
@@ -88,14 +88,14 @@ const toggleView = () => {
 
       <div class="filter-group">
         <label for="barcode">Штрихкод:</label>
-        <PrimeInputText v-model="filterInputs.barcode" placeholder="Штрихкод" />
+        <PrimeInputText v-model="filterInputs.barcode" placeholder="Поиск по штрихкоду" />
       </div>
 
       <div class="filter-group">
         <label for="quantity">Количество:</label>
         <PrimeInputText
           v-model="filterInputs.quantity"
-          placeholder="Количество"
+          placeholder="Поиск по количеству"
           type="number"
         />
       </div>

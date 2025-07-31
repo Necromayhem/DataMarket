@@ -2,12 +2,13 @@
 import { useStocksFetch } from "./useStocksFetch";
 import { useStocksStore } from "./useStocksStore";
 import { useStocksFilters } from "./useStocksFilters";
-import { stocksColumns } from "./stocksColumns";
-import PrimeDataTable from "primevue/datatable";
-import PrimeColumn from "primevue/column";
-import PrimeProgressSpinner from "primevue/progressspinner";
 import PrimeInputText from "primevue/inputtext";
 import PrimeInputNumber from "primevue/inputnumber";
+import PrimeProgressSpinner from "primevue/progressspinner";
+import PrimeButton from "primevue/button";
+import StocksTable from "./StocksTable.vue";
+import StocksChart from "./StocksChart.vue";
+import { ref } from "vue";
 
 const store = useStocksStore();
 const { 
@@ -22,10 +23,24 @@ const {
     formatNumber
 } = useStocksFilters(store);
 const { isLoading, error } = useStocksFetch(fetchParams);
+
+const showTable = ref(true);
+const toggleView = () => {
+  showTable.value = !showTable.value;
+};
 </script>
 
 <template>
   <div class="card">
+    <div class="view-toggle">
+      <PrimeButton 
+        @click="toggleView" 
+        :label="showTable ? 'Показать график' : 'Показать таблицу'" 
+        icon="pi pi-chart-line"
+        class="p-button-text"
+      />
+    </div>
+
     <div class="filters">
       <div class="filter-group">
         <label for="supplier_article">Артикул поставщика:</label>
@@ -84,7 +99,7 @@ const { isLoading, error } = useStocksFetch(fetchParams);
       </div>
 
       <div class="filter-group">
-        <label for="discount">Скидка:</label>
+        <label for="discount">Скидка %:</label>
         <PrimeInputNumber 
           v-model="discountModel" 
           placeholder="Поиск по скидке" 
@@ -114,35 +129,8 @@ const { isLoading, error } = useStocksFetch(fetchParams);
     </div>
 
     <div v-else>
-      <PrimeDataTable
-        :value="filteredStocks"
-        :paginator="true"
-        :rows="10"
-        :totalRecords="filteredStocks.length"
-        :rowsPerPageOptions="[10, 25, 50, 100]"
-        stripedRows
-        responsiveLayout="scroll"
-        removableSort
-        currentPageReportTemplate="Показано {first} - {last} из {totalRecords}"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-      >
-        <PrimeColumn
-          v-for="col in stocksColumns"
-          :key="col.field"
-          :field="col.field"
-          :header="col.header"
-          :sortable="true"
-        >
-          <template #body="{ data }">
-            <template v-if="['price', 'discount'].includes(col.field)">
-              {{ formatNumber(data[col.field]) }}
-            </template>
-            <template v-else>
-              {{ data[col.field] || "-" }}
-            </template>
-          </template>
-        </PrimeColumn>
-      </PrimeDataTable>
+      <StocksTable v-if="showTable" :stocks="filteredStocks" />
+      <StocksChart v-else :stocks="filteredStocks" />
     </div>
   </div>
 </template>
@@ -185,6 +173,12 @@ const { isLoading, error } = useStocksFetch(fetchParams);
   background-color: var(--red-100);
   color: var(--red-700);
   border-radius: 6px;
+}
+
+.view-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 }
 
 @media (max-width: 768px) {
