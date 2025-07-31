@@ -2,20 +2,35 @@
 import { useIncomesFetch } from "./useIncomesFetch";
 import { useIncomesStore } from "./useIncomesStore";
 import { useIncomesFilters } from "./useIncomesFilters";
-import { incomesColumns } from "./incomesColumns";
-import PrimeDataTable from "primevue/datatable";
-import PrimeColumn from "primevue/column";
-import PrimeProgressSpinner from "primevue/progressspinner";
 import PrimeInputText from "primevue/inputtext";
 import PrimeCalendar from "primevue/calendar";
+import PrimeProgressSpinner from "primevue/progressspinner";
+import PrimeButton from "primevue/button";
+import IncomesTable from "./IncomesTable.vue";
+import IncomesChart from "./IncomesChart.vue";
+import { ref } from "vue";
 
 const store = useIncomesStore();
 const { filterInputs, dateFromModel, dateToModel, fetchParams, filteredIncomes } = useIncomesFilters(store);
 const { isLoading, error } = useIncomesFetch(fetchParams);
+
+const showTable = ref(true);
+const toggleView = () => {
+  showTable.value = !showTable.value;
+};
 </script>
 
 <template>
   <div class="card">
+    <div class="view-toggle">
+      <PrimeButton 
+        @click="toggleView" 
+        :label="showTable ? 'Показать график' : 'Показать таблицу'" 
+        icon="pi pi-chart-line"
+        class="p-button-text"
+      />
+    </div>
+
     <div class="filters">
       <div class="filter-group">
         <label for="income_id">ID поступления:</label>
@@ -109,31 +124,12 @@ const { isLoading, error } = useIncomesFetch(fetchParams);
     </div>
 
     <div v-else>
-      <PrimeDataTable
-            :value="filteredIncomes"
-            :paginator="true"
-            :rows="10"
-            :totalRecords="filteredIncomes.length"
-            :rowsPerPageOptions="[10, 25, 50, 100, 250, 500]"
-            stripedRows
-            responsiveLayout="scroll"
-            removableSort
-        >
-            <PrimeColumn
-                v-for="col in incomesColumns"
-                :key="col.field"
-                :field="col.field"
-                :header="col.header"
-                :sortable="true"
-            >
-                <template #body="{ data }">
-                    {{ data[col.field] || "-" }}
-                </template>
-            </PrimeColumn>
-        </PrimeDataTable>
+      <IncomesTable v-if="showTable" :incomes="filteredIncomes" />
+      <IncomesChart v-else :incomes="filteredIncomes" />
     </div>
   </div>
 </template>
+
 <style scoped>
 .card {
   padding: 2rem;
@@ -156,18 +152,6 @@ const { isLoading, error } = useIncomesFetch(fetchParams);
   min-width: 200px;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.page-info {
-  font-size: 0.875rem;
-  color: var(--text-color-secondary);
-}
-
 .loading-spinner {
   display: flex;
   justify-content: center;
@@ -177,5 +161,11 @@ const { isLoading, error } = useIncomesFetch(fetchParams);
 .error-message {
   margin: 1rem 0;
   color: var(--red-500);
+}
+
+.view-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 }
 </style>
