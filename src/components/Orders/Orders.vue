@@ -1,15 +1,18 @@
+[file name]: Orders.vue
+[file content begin]
 <script setup lang="ts">
 import { useOrdersFetch } from "./useOrdersFetch";
 import { useOrdersStore } from "./useOrdersStore";
 import { useOrdersFilters } from "./useOrdersFilters";
-import { ordersColumns } from "./ordersColumns";
-import PrimeDataTable from "primevue/datatable";
-import PrimeColumn from "primevue/column";
-import PrimeProgressSpinner from "primevue/progressspinner";
 import PrimeInputText from "primevue/inputtext";
 import PrimeCalendar from "primevue/calendar";
 import PrimeInputNumber from "primevue/inputnumber";
 import PrimeDropdown from "primevue/dropdown";
+import PrimeProgressSpinner from "primevue/progressspinner";
+import PrimeButton from "primevue/button";
+import OrdersTable from "./OrdersTable.vue";
+import OrdersChart from "./OrdersChart.vue";
+import { ref } from "vue";
 
 const store = useOrdersStore();
 const { 
@@ -25,10 +28,24 @@ const {
     cancelOptions
 } = useOrdersFilters(store);
 const { isLoading, error } = useOrdersFetch(fetchParams);
+
+const showTable = ref(true);
+const toggleView = () => {
+  showTable.value = !showTable.value;
+};
 </script>
 
 <template>
   <div class="card">
+    <div class="view-toggle">
+      <PrimeButton 
+        @click="toggleView" 
+        :label="showTable ? 'Показать график' : 'Показать таблицу'" 
+        icon="pi pi-chart-line"
+        class="p-button-text"
+      />
+    </div>
+
     <div class="filters">
       <div class="filter-group">
         <label for="g_number">Номер заказа:</label>
@@ -133,38 +150,8 @@ const { isLoading, error } = useOrdersFetch(fetchParams);
     </div>
 
     <div v-else>
-      <PrimeDataTable
-        :value="filteredOrders"
-        :paginator="true"
-        :rows="10"
-        :totalRecords="filteredOrders.length"
-        :rowsPerPageOptions="[10, 25, 50, 100]"
-        stripedRows
-        responsiveLayout="scroll"
-        removableSort
-        currentPageReportTemplate="Показано {first} - {last} из {totalRecords}"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-      >
-        <PrimeColumn
-          v-for="col in ordersColumns"
-          :key="col.field"
-          :field="col.field"
-          :header="col.header"
-          :sortable="true"
-        >
-          <template #body="{ data }">
-            <template v-if="['total_price', 'discount_percent'].includes(col.field)">
-              {{ formatNumber(data[col.field]) }}
-            </template>
-            <template v-else-if="col.field === 'is_cancel'">
-              {{ data[col.field] ? 'Да' : 'Нет' }}
-            </template>
-            <template v-else>
-              {{ data[col.field] || "-" }}
-            </template>
-          </template>
-        </PrimeColumn>
-      </PrimeDataTable>
+      <OrdersTable v-if="showTable" :orders="filteredOrders" />
+      <OrdersChart v-else :orders="filteredOrders" />
     </div>
   </div>
 </template>
@@ -209,6 +196,12 @@ const { isLoading, error } = useOrdersFetch(fetchParams);
   border-radius: 6px;
 }
 
+.view-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 768px) {
   .filters {
     grid-template-columns: 1fr;
@@ -219,3 +212,4 @@ const { isLoading, error } = useOrdersFetch(fetchParams);
   }
 }
 </style>
+[file content end]
